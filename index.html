@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการข้อมูลนักเรียน</title>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .search-box {
+            margin: 20px 0;
+            padding: 10px;
+        }
+        select, input {
+            padding: 5px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ระบบจัดการข้อมูลนักเรียน</h1>
+        
+        <div class="search-box">
+            <select id="classFilter">
+                <option value="">ทุกชั้นเรียน</option>
+                <option value="ม.6/1">ม.6/1</option>
+                <option value="ม.6/2">ม.6/2</option>
+                <option value="ม.6/3">ม.6/3</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="ค้นหาชื่อนักเรียน...">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>รหัสนักเรียน</th>
+                    <th>ชื่อ</th>
+                    <th>นามสกุล</th>
+                    <th>ชั้นเรียน</th>
+                    <th>เกรดเฉลี่ย</th>
+                    <th>วันเกิด</th>
+                </tr>
+            </thead>
+            <tbody id="studentTable">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        async function fetchStudents() {
+            try {
+                const response = await fetch(`${API_URL}/students`);
+                const students = await response.json();
+                return students;
+            } catch (error) {
+                console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
+                return [];
+            }
+        }
+
+        function displayStudents(students) {
+            const tableBody = document.getElementById('studentTable');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedClass = document.getElementById('classFilter').value;
+
+            const filteredStudents = students.filter(student => {
+                const matchesSearch = student.ชื่อ.toLowerCase().includes(searchTerm) ||
+                                    student.นามสกุล.toLowerCase().includes(searchTerm);
+                const matchesClass = selectedClass === '' || student.ชั้นเรียน === selectedClass;
+                return matchesSearch && matchesClass;
+            });
+
+            tableBody.innerHTML = filteredStudents.map(student => `
+                <tr>
+                    <td>${student.รหัสนักเรียน}</td>
+                    <td>${student.ชื่อ}</td>
+                    <td>${student.นามสกุล}</td>
+                    <td>${student.ชั้นเรียน}</td>
+                    <td>${student.เกรดเฉลี่ย}</td>
+                    <td>${student.วันเกิด}</td>
+                </tr>
+            `).join('');
+        }
+
+        // โหลดข้อมูลเมื่อโหลดหน้าเว็บ
+        let allStudents = [];
+        window.onload = async () => {
+            allStudents = await fetchStudents();
+            displayStudents(allStudents);
+        };
+
+        // เพิ่ม event listeners สำหรับการค้นหาและกรอง
+        document.getElementById('searchInput').addEventListener('input', () => {
+            displayStudents(allStudents);
+        });
+
+        document.getElementById('classFilter').addEventListener('change', () => {
+            displayStudents(allStudents);
+        });
+    </script>
+</body>
+</html> 
